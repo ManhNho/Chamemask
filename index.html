@@ -29,8 +29,13 @@
 <meta name="referrer" content="no-referrer">
 <meta http-equiv="X-Content-Type-Options" content="nosniff">
 <meta name="description" content="Fake identity generator for testing. 102 countries, realistic profiles with valid checksums. For QA, security testing, and privacy.">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://thispersonnotexist.org data: blob:; connect-src 'self' https://thispersonnotexist.org">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://thispersonnotexist.org data: blob:; connect-src 'self' https://thispersonnotexist.org; worker-src 'self' blob:">
 <title>Chamemask</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#4CAF50">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://thispersonnotexist.org">
@@ -1240,11 +1245,11 @@ PGEN.cn=(sex,y,m,d,addr)=>{
 // -- JAPAN --
 PGEN.jp=(sex,y,m,d)=>{
   let mn=RD(11);const mw=[6,5,4,3,2,7,6,5,4,3,2];let ms=0;for(let i=0;i<11;i++)ms+=parseInt(mn[i])*mw[i];const mr=ms%11;mn+=(mr<=1)?'0':String(11-mr);
-  const pref=pad(R(47)+1,2);const dl=pref+RD(10);
-  let cn=RD(12);const cw=[2,1,2,1,2,1,2,1,2,1,2,1];let cs=0;for(let i=0;i<12;i++)cs+=parseInt(cn[i])*cw[i];const cr=9-cs%9;cn=String(cr)+cn;
+  const pref=pad(R(47)+1,2);const iy=pad(y%100,2);const seq=RD(6);const dl=pref+iy+seq+pad(R(10),1)+pad(R(10),1);
+  let cb=RD(12);const cw=[1,2,1,2,1,2,1,2,1,2,1,2];let cs=0;for(let i=0;i<12;i++)cs+=parseInt(cb[i])*cw[i];const cr=9-(cs%9);cb=String(cr===9?0:cr)+cb;
   return{pid:{l:'My Number (マイナンバー)',v:mn,f:mn.slice(0,4)+' '+mn.slice(4,8)+' '+mn.slice(8)},
-    tax:{l:'Corp Number (法人番号)',v:cn,f:cn[0]+' '+cn.slice(1,5)+' '+cn.slice(5,9)+' '+cn.slice(9)},
-    dl:{l:'Driver License (運転免許)',v:dl,f:dl.slice(0,4)+' '+dl.slice(4,8)+' '+dl.slice(8)}};
+    tax:{l:'Corp Number (法人番号)',v:cb,f:cb[0]+' '+cb.slice(1,5)+' '+cb.slice(5,9)+' '+cb.slice(9)},
+    dl:{l:'Driver License (運転免許)',v:dl,f:pref+' '+iy+' '+seq+' '+dl.slice(10)}};
 };
 
 // -- INDIA --
@@ -3959,6 +3964,7 @@ function generate(){
   if(!userPicked){const si=document.getElementById('searchInput');si.focus();si.classList.add('shake');setTimeout(()=>si.classList.remove('shake'),500);return;}
   profiles=[];const p=genProfile(selCode);if(p)profiles.push(p);
   renderCards();
+  history.replaceState(null,'','#'+selCode.toUpperCase());
 }
 
 function profileObj(p){
@@ -4207,12 +4213,13 @@ async function runExport(){
   const fill=document.getElementById('expFill');const txt=document.getElementById('expTxt');
 
   const data=[];
+  const BATCH=5;
   for(let i=0;i<cnt;i++){
     const p=genProfile(selCode);
     if(p)data.push(filterObj(fullProfileObj(p),fields));
-    if(i%10===0){fill.style.width=Math.round(i/cnt*100)+'%';txt.textContent=`Generating ${i+1}/${cnt}...`;await new Promise(r=>setTimeout(r,0));}
+    if(i%BATCH===0){const pct=Math.round(i/cnt*100);fill.style.width=pct+'%';prog.setAttribute('aria-valuenow',pct);txt.textContent=`Generating ${i+1}/${cnt}...`;await new Promise(r=>requestAnimationFrame(()=>setTimeout(r,0)));}
   }
-  fill.style.width='100%';txt.textContent='Preparing file...';
+  fill.style.width='100%';prog.setAttribute('aria-valuenow',100);txt.textContent='Preparing file...';
   await new Promise(r=>setTimeout(r,50));
 
   let blob,ext;
@@ -4263,6 +4270,19 @@ document.addEventListener('keydown',function(e){
     }
   }
 });
+
+// PWA: Register service worker
+if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{});}
+
+// URL hash routing: #VN, #JP, etc.
+function applyHash(){
+  const h=location.hash.replace('#','').toLowerCase();
+  if(!h)return;
+  const c=CO.find(x=>x.id===h);
+  if(c){userPicked=true;selCont=c.co;selCode=c.id;profiles=[];buildTabs();buildPills();generate();}
+}
+window.addEventListener('hashchange',applyHash);
+applyHash();
 
 </script>
 </body>

@@ -1,0 +1,19 @@
+{
+  "name": "Chamemask — Fake Identity Generator",
+  "short_name": "Chamemask",
+  "description": "Fake identity generator for testing. 102 countries, realistic profiles with valid checksums.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#1a1a2e",
+  "theme_color": "#4CAF50",
+  "orientation": "any",
+  "categories": ["developer", "utilities"],
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
