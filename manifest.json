@@ -4,8 +4,8 @@
   "description": "Fake identity generator for testing. 102 countries, realistic profiles with valid checksums.",
   "start_url": "./",
   "display": "standalone",
-  "background_color": "#1a1a2e",
-  "theme_color": "#4CAF50",
+  "background_color": "#0c1222",
+  "theme_color": "#2563eb",
   "orientation": "any",
   "categories": ["developer", "utilities"],
   "icons": [
